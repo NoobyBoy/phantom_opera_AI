@@ -1,0 +1,3 @@
+[submodule "phantom_opera"]
+	path = phantom_opera
+	url = https://github.com/nlehir/phantom_opera.git
