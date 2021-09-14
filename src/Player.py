@@ -310,6 +310,7 @@ class Player:
                         )
                         logger.warning(warning_message)
                         __import__('ipdb').set_trace()
+                        logger.warning(type(passages_work))
                         selected_exit = choice(passages_work)
 
                     else:

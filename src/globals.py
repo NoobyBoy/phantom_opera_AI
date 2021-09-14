@@ -3,16 +3,16 @@ import os
 import socket
 from logging.handlers import RotatingFileHandler
 
-"""
-    server setup
-"""
-link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-link.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-host = ''
-port = 12000
-link.bind((host, port))
-# list that will later contain the sockets
-clients = []
+# """
+#     server setup
+# """
+# link = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# link.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+# host = ''
+# port = 12000
+# link.bind((host, port))
+# # list that will later contain the sockets
+# clients = []
 
 """
     game data
