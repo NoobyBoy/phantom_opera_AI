@@ -8,9 +8,7 @@ import socket
 from logging.handlers import RotatingFileHandler
 import protocol
 
-from typing import Tuple
-from random import randint, choice
-from globals import passages, colors, pink_passages, before, after, logger, mandatory_powers
+from BasePlayer import *
 
 host = "localhost"
 port = 12000
@@ -23,7 +21,8 @@ fantom_logger = logging.getLogger()
 fantom_logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
     "%(asctime)s :: %(levelname)s :: %(message)s", "%H:%M:%S")
-# file
+# file#!/usr/bin/env python3
+
 if os.path.exists("./logs/fantom.log"):
     os.remove("./logs/fantom.log")
 file_handler = RotatingFileHandler('./logs/fantom.log', 'a', 1000000, 1)
@@ -37,14 +36,13 @@ fantom_logger.addHandler(stream_handler)
 
 
 
-class Phantom():
+class Phantom(BasePlayer):
 
     def __init__(self):
-
+        BasePlayer.__init__(self)
         self.end = False
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.data = {};
 
     def connect(self):
         self.socket.connect((host, port))
@@ -52,18 +50,9 @@ class Phantom():
     def disconnect(self):
         self.socket.close()
 
-    def getActiveCards(self):
-        return self.data["game state"]["active character_cards"]
-
-    def getActiveCardsColors(self):
-        return [elem["color"] for elem in self.data["game state"]["active character_cards"]]
-
-    def getIndexOfColor(self, color):
-        return self.getActiveCardsColors().index(color)
-
     def printAnswerSelection(self):
         fantom_logger.debug("|\n|")
-        fantom_logger.debug("fantom answers")
+        fantom_logger.debug("Phantom answers")
         fantom_logger.debug(f"question type ----- {self.data['question type']}")
         fantom_logger.debug(f"data -------------- {self.possible_answer}")
         fantom_logger.debug(f"response index ---- {self.response_index}")
@@ -76,7 +65,7 @@ class Phantom():
             self.response_index = randint(0, 3)
         self.printCharacterSelection()
 
-    def selectPostion(self):
+    def selectPosition(self):
         self.response_index = 0
 
     def selectActavationOfpower(self):
@@ -84,7 +73,7 @@ class Phantom():
 
     def selectPurplePower(self):
         """
-            Pruple: Can swap postion with another character
+            Pruple: Can swap position with another character
         """
         self.response_index = 0
 
@@ -124,24 +113,23 @@ class Phantom():
 
 
     def answer(self):
-        question = self.data['question type']
-        if (question == "select character"):
+        if (self.question == "select character"):
             self.selectCharacter()
-        if (question == "select position"):
-            self.selectPostion()
-        if ("activate" in question and "power" in question):
+        if (self.question == "select position"):
+            self.selectPosition()
+        if ("activate" in self.question and "power" in self.question):
             self.selectActavationOfpower()
-        if (question == "purple character power"):
+        if (self.question == "purple character power"):
             self.selectPurplePower()
-        if (question == "brown character power"):
+        if (self.question == "brown character power"):
             self.selectBrownPower()
-        if (question == "grey character power"):
+        if (self.question == "grey character power"):
             self.selectGreyPower()
-        if (question == "blue character power room"):
+        if (self.question == "blue character power room"):
             self.selectBluePowerRoom()
-        if (question == "blue character power exit"):
+        if (self.question == "blue character power exit"):
             self.selectBluePowerExit()
-        if ("white character power move" in question):
+        if ("white character power move" in self.question):
             self.selectWhitePower()
         self.printAnswerSelection()
         return self.response_index
@@ -149,9 +137,11 @@ class Phantom():
 
     def handle_json(self, msg):
         self.data = json.loads(msg)
+        self.question = self.data["question type"]
         self.possible_answer = self.data["data"]
-        response = self.answer()
+        self.game_state = self.data["game state"]
         # import pdb; pdb.set_trace()
+        response = self.answer()
         bytes_data = json.dumps(response).encode("utf-8")
         protocol.send_json(self.socket, bytes_data)
         self.data.clear();
