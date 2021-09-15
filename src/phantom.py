@@ -53,7 +53,7 @@ class Phantom(BasePlayer):
     def printAnswerSelection(self):
         fantom_logger.debug("|\n|")
         fantom_logger.debug("Phantom answers")
-        fantom_logger.debug(f"question type ----- {self.data['question type']}")
+        fantom_logger.debug(f"question type ----- {self.question}")
         fantom_logger.debug(f"data -------------- {self.possible_answer}")
         fantom_logger.debug(f"response index ---- {self.response_index}")
         fantom_logger.debug(f"response ---------- {self.possible_answer[self.response_index]}")
@@ -62,8 +62,7 @@ class Phantom(BasePlayer):
         if ("red" in self.getActiveCardsColors()):
             self.response_index = self.getIndexOfColor("red")
         else:
-            self.response_index = randint(0, 3)
-        self.printCharacterSelection()
+            self.response_index = randint(0, len(self.possible_answer) - 1)
 
     def selectPosition(self):
         self.response_index = 0

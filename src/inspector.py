@@ -54,7 +54,7 @@ class Inspector(BasePlayer):
     def printAnswerSelection(self):
         inspector_logger.debug("|\n|")
         inspector_logger.debug("Inspector answers")
-        inspector_logger.debug(f"question type ----- {self.data['question type']}")
+        inspector_logger.debug(f"question type ----- {self.question}")
         inspector_logger.debug(f"data -------------- {self.possible_answer}")
         inspector_logger.debug(f"response index ---- {self.response_index}")
         inspector_logger.debug(f"response ---------- {self.possible_answer[self.response_index]}")
@@ -63,8 +63,7 @@ class Inspector(BasePlayer):
         if ("red" in self.getActiveCardsColors()):
             self.response_index = self.getIndexOfColor("red")
         else:
-            self.response_index = randint(0, 3)
-        self.printCharacterSelection()
+            self.response_index = randint(0, len(self.possible_answer) - 1)
 
     def selectPosition(self):
         self.response_index = 0
