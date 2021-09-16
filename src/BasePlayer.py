@@ -50,6 +50,9 @@ class BasePlayer():
     def getInnocentNbInRoom(self, roomNb):
         return len([charact for charact in self.game_state["characters"] if charact["position"] == roomNb and charact["suspect"] == False])
 
+    def getCharactersInRoom(self, roomNb):
+        return [charact for charact in self.game_state["characters"] if charact["position"] == roomNb]
+
 
     def getPossibleMovement(self, charact):
         nbCharact = self.getNbOfCharacterInRoom(charact["position"])
@@ -70,3 +73,35 @@ class BasePlayer():
         if charact["position"] in room_list:
             room_list.remove(charact["position"])
         return room_list
+
+    def getRoomStatus(self, roomNb):
+        status = {}
+        status["roomNb"] = roomNb
+        status["charact_nb"] = self.getCharacterNbInRoom(roomNb)
+        status["innocent_nb"] = self.getInnocentNbInRoom(roomNb)
+        status["suspect_nb"] = self.getSuspecNbtInRoom(roomNb)
+        status["new_innocent_if_no_scream"] = (1 if (status["charact_nb"] == status["suspect_nb"] == 1) else 0) if (self.game_state["shadow"] != roomNb) else status["suspect_nb"]
+        status["new_innocent_if_scream"] = (status["suspect_nb"] if (status["charact_nb"] > 1) else 0) if (self.game_state["shadow"] != roomNb) else 0
+
+        return status
+
+    def getGameStatus(self) :
+        status_list = []
+        tniins = 0
+        tniis = 0
+        ti = 0
+        ts = 0
+        for i in range(0, 9):
+            tmp_status = self.getRoomStatus(i)
+            tniins += tmp_status["new_innocent_if_no_scream"]
+            tniis += tmp_status["new_innocent_if_scream"]
+            ti += tmp_status["innocent_nb"]
+            ts += tmp_status["suspect_nb"]
+            status_list.append(tmp_status)
+        status = {}
+        status["total_innocent"] = ti
+        status["total_suspect"] = ts
+        status["total_new_innocent_if_no_scream"] = tniins
+        status["total_new_innocent_if_scream"] = tniis
+        status["rooms"] = status_list
+        return status
