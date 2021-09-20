@@ -147,14 +147,16 @@ class Phantom(BasePlayer):
 
 
     def run(self):
-
-        while self.end is not True:
-            received_message = protocol.receive_json(self.socket)
-            if received_message:
-                self.handle_json(received_message)
-            else:
-                fantom_logger.debug("My job here is done.")
-                self.end = True
+        try :
+            while self.end is not True:
+                received_message = protocol.receive_json(self.socket)
+                if received_message:
+                    self.handle_json(received_message)
+                else:
+                    fantom_logger.debug("Phantom: My job here is done.")
+                    self.end = True
+        except ConnectionResetError:
+            return
 
 
 

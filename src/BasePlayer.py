@@ -82,7 +82,6 @@ class BasePlayer():
         status["suspect_nb"] = self.getSuspecNbtInRoom(roomNb)
         status["new_innocent_if_no_scream"] = (1 if (status["charact_nb"] == status["suspect_nb"] == 1) else 0) if (self.game_state["shadow"] != roomNb) else status["suspect_nb"]
         status["new_innocent_if_scream"] = (status["suspect_nb"] if (status["charact_nb"] > 1) else 0) if (self.game_state["shadow"] != roomNb) else 0
-
         return status
 
     def getGameStatus(self) :

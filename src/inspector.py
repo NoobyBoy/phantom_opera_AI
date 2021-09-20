@@ -149,14 +149,16 @@ class Inspector(BasePlayer):
 
     def run(self):
 
-        while self.end is not True:
-            received_message = protocol.receive_json(self.socket)
-            if received_message:
-                self.handle_json(received_message)
-            else:
-                inspector_logger.debug("My job here is done.")
-                self.end = True
-
+        try :
+            while self.end is not True:
+                received_message = protocol.receive_json(self.socket)
+                if received_message:
+                    self.handle_json(received_message)
+                else:
+                    inspector_logger.debug("Inspector: My job here is done.")
+                    self.end = True
+        except ConnectionResetError:
+            return
 
 
 if __name__ == '__main__':
