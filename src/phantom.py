@@ -63,8 +63,26 @@ class Phantom(BasePlayer):
             self.response_index = self.getIndexOfColor("red")
         else:
             self.response_index = randint(0, len(self.possible_answer) - 1)
+        self.selected_character = self.possible_answer[self.response_index]
+
 
     def selectPosition(self):
+        emptyroom = 0
+        room_with_one_suspect = 0
+        room_with_mult_suspect = 0
+
+        # the phantom must have a max of suspect in the same state (scream or no scream)
+        for room in self.possible_answer: # here possible_answer = reachable_rooms
+            status = self.getRoomStatus(room)
+            emptyroom += 1 if status["charact_nb"] == 0 else 0
+            room_with_one_suspect += 1 if status["suspect_nb"] == 1 else 0
+            room_with_mult_suspect += 1 if status["suspect_nb"] > 1 else 0
+        fantom_logger.debug(f"emptyroom :{emptyroom}   room_with_one_suspect:{room_with_one_suspect}  room_with_mult_suspect: {room_with_mult_suspect}")
+        if (room_with_one_suspect > room_with_mult_suspect and emptyroom > 0):
+            self.response_index = self.possible_answer.index(self.getEmptyRoomInList(self.possible_answer))
+        else:
+            self.response_index = self.possible_answer.index(self.getMostFilledWithSuspectRoom(self.possible_answer))
+
         self.response_index = 0
 
     def selectActavationOfpower(self):

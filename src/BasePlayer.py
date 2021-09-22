@@ -16,6 +16,7 @@ class BasePlayer():
         self.question = {}
         self.possible_answer = {}
         self.game_state = {}
+        self.selected_character = {}
 
     def getActiveCards(self):
         return self.game_state["active character_cards"]
@@ -44,7 +45,7 @@ class BasePlayer():
     def getCharacterNbInRoom(self, roomNb):
         return len([charact for charact in self.game_state["characters"] if charact["position"] == roomNb])
 
-    def getSuspecNbtInRoom(self, roomNb):
+    def getSuspecNbInRoom(self, roomNb):
         return len([charact for charact in self.game_state["characters"] if charact["position"] == roomNb and charact["suspect"] == True])
 
     def getInnocentNbInRoom(self, roomNb):
@@ -74,12 +75,30 @@ class BasePlayer():
             room_list.remove(charact["position"])
         return room_list
 
+    def getEmptyRoomInList(self, roomList):
+        for room in roomList:
+            if (self.getCharacterNbInRoom(room) == 0):
+                return room
+
+    def getMostFilledWithSuspectRoom(self, roomList):
+        max = 0
+        room_max = roomList[0]
+        for room in roomList:
+            sus = self.getSuspecNbInRoom(room)
+            if (sus > max):
+                max = sus
+                room_max = room
+
+        return room
+
+
+
     def getRoomStatus(self, roomNb):
         status = {}
         status["roomNb"] = roomNb
         status["charact_nb"] = self.getCharacterNbInRoom(roomNb)
         status["innocent_nb"] = self.getInnocentNbInRoom(roomNb)
-        status["suspect_nb"] = self.getSuspecNbtInRoom(roomNb)
+        status["suspect_nb"] = self.getSuspecNbInRoom(roomNb)
         status["new_innocent_if_no_scream"] = (1 if (status["charact_nb"] == status["suspect_nb"] == 1) else 0) if (self.game_state["shadow"] != roomNb) else status["suspect_nb"]
         status["new_innocent_if_scream"] = (status["suspect_nb"] if (status["charact_nb"] > 1) else 0) if (self.game_state["shadow"] != roomNb) else 0
         return status
