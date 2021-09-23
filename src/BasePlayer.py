@@ -89,7 +89,7 @@ class BasePlayer():
                 max = sus
                 room_max = room
 
-        return room
+        return room_max
 
 
 
