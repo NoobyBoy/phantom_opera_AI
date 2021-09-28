@@ -25,7 +25,8 @@ class BasePlayer():
         return [elem["color"] for elem in self.game_state["active character_cards"]]
 
     def getIndexOfColor(self, color):
-        return self.getActiveCardsColors().index(color)
+        color_list = [col["color"] for col in self.possible_answer]
+        return color_list.index(color)
 
     def getAdjacentRooms(self, charact):
         if charact["color"] == "pink":
@@ -41,7 +42,6 @@ class BasePlayer():
             active_passages = passages
         return [room for room in active_passages[roomNb] if set([room, roomNb]) != set(self.game_state["blocked"])]
 
-
     def getCharacterNbInRoom(self, roomNb):
         return len([charact for charact in self.game_state["characters"] if charact["position"] == roomNb])
 
@@ -54,6 +54,11 @@ class BasePlayer():
     def getCharactersInRoom(self, roomNb):
         return [charact for charact in self.game_state["characters"] if charact["position"] == roomNb]
 
+    def getSuspectPlayable(self):
+        return [char for char in self.game_state["active character_cards"] if char["suspect"] == True]
+
+    def getInnocentPlayable(self):
+        return [char for char in self.game_state["active character_cards"] if char["suspect"] == False]
 
     def getPossibleMovement(self, charact):
         nbCharact = self.getNbOfCharacterInRoom(charact["position"])
