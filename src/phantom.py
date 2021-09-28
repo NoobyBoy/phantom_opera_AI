@@ -112,8 +112,6 @@ class Phantom(BasePlayer):
         return len([char for char in self.game_state["active character_cards"] if char["position"] == roomNb and char["suspect"] == True])
 
     def selectPositionPhantom(self):
-
-
         reachable_empty_room = []
         room_with_one_suspect = []
         room_with_mult_suspect = []
@@ -130,11 +128,13 @@ class Phantom(BasePlayer):
                     total_suspect_grouped += status["suspect_nb"]
                 if (status["suspect_nb"] == self.nbSuspectMoveFromThisRoom(room) + 1):
                     room_with_one_suspect.append(room)
-                if (status["suspect_nb"] == self.nbSuspectMoveFromThisRoom(room)):
+                if (status["suspect_nb"] == self.nbSuspectMoveFromThisRoom(room) and room in self.possible_answer):
                     reachable_empty_room.append(room)
 
 
+
         fantom_logger.debug(f"reachable_empty_room :{reachable_empty_room}   room_with_one_suspect:{room_with_one_suspect}  room_with_mult_suspect: {room_with_mult_suspect} with a total of : {total_suspect_grouped}")
+        fantom_logger.debug(f"{self.possible_answer}")
         # if there is more isolated suspect than grouped suspect
         if (len(room_with_one_suspect) > total_suspect_grouped and len(reachable_empty_room) > 0):
             #if the shadow room is reachable
@@ -151,7 +151,6 @@ class Phantom(BasePlayer):
             self.response_index = self.possible_answer.index(self.getMostFilledWithSuspectRoom(self.possible_answer))
         else:
             self.response_index = randint(0, len(self.possible_answer) - 1)
-
 
     def selectPositionNotPhantomSuspect(self):
 
@@ -238,7 +237,6 @@ class Phantom(BasePlayer):
             else:
                 self.response_index = randint(0, len(self.possible_answer) - 1)
 
-
     def selectPosition(self):
         """
          the phantom player must have a max of suspect in the same state (scream or no scream)
@@ -257,31 +255,69 @@ class Phantom(BasePlayer):
             self.selectPositionNotPhantomNotSuspect()
 
 
-
-
-
     def selectActavationOfpower(self):
         if (self.selected_character["color"] == "purple"):
             if (self.selected_character["color"] == self.game_state["fantom"]):
                 if (self.game_state["num_tour"] == 1): self.response_index = 0
-                else: self.response_index = 1
+                else: self.response_index = 1 if (self.selectPurplePowerPhantom(True)) else 0
             else:
                 self.response_index = 1 if (self.selectPurplePower(True)) else 0
-
+        if (self.selected_character["color"] == "black"):
+            self.response_index = 1 if self.selectBlackPower() else 0
         else:
             self.response_index = 0
+
+    def selectPurplePowerPhantom(self, checkIfUsable=False):
+        reachable_empty_room = []
+        room_with_one_suspect = []
+        total_suspect_grouped = 0
+
+        for room in range(0, 10):
+            status = self.getRoomStatus(room)
+            fantom_logger.debug(status)
+            if status["charact_nb"] == 0 and room in self.possible_answer: reachable_empty_room.append(room)
+            if status["charact_nb"] == 1 and status["suspect_nb"] == 1 and self.nbSuspectMoveFromThisRoom(room) == 0 : room_with_one_suspect.append(room)
+            if status["suspect_nb"] > 1 and room != self.game_state["shadow"]:
+                if (status["suspect_nb"] > self.nbSuspectMoveFromThisRoom(room)):
+                    total_suspect_grouped += status["suspect_nb"]
+                if (status["suspect_nb"] == self.nbSuspectMoveFromThisRoom(room) + 1):
+                    room_with_one_suspect.append(room)
+                if (status["suspect_nb"] == self.nbSuspectMoveFromThisRoom(room)):
+                    reachable_empty_room.append(room)
+
+            if (len(room_with_one_suspect) > total_suspect_grouped):
+                for charac in self.game_state["characters"]:
+                    if (charac["suspect"] == False and charac["color"] != "purple"):
+                        status = self.getRoomStatus(charac["position"])
+                        if (status["innocent_nb"] == status["charact_nb"] == 1):
+                            if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
+                            return True
+                        if (charac["position"] == self.game_state["shadow"]):
+                            if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
+                            return True
+                return False #1.
+            else:
+                for charac in self.game_state["characters"]:
+                    if (charac["suspect"] == False and charac["color"] != "purple"):
+                        status = self.getRoomStatus(charac["position"])
+                        if (status["charact_nb"] > 1):
+                            if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
+                            return True
+                return False #2.
 
     def selectPurplePower(self, checkIfUsable=False):
         """
             Pruple: Can swap position with another character
                      1. Useless when phantom can scream -> purple not innocent but no innocent alone or no innocent in dark
-                     2. Useless when phantom cannot scream -> purple not innocent but no suspect whith innocent
+                     2. Useless when phantom cannot scream -> purple not innocent but no group
                      3. Useless when phantom can scream -> purple innocent and alone or in shadow but no grouped suspect outside shadow
                      4. Useless when phantom can scream -> purple innocent and not alone
                      5. Useless when phantom cannot scream -> purple innocent alone
                      6. Useless when phantom cannot scream -> purple innocent not alone but no suspect alone
         """
-        if (self.selected_character["suspect"]):
+        if (self.selected_character["color"] == self.game_state["fantom"]):
+            self.selectPurplePowerPhantom()
+        elif (self.selected_character["suspect"]):
             if (self.phantomCanScream()):
                 for charac in self.game_state["characters"]:
                     if (charac["suspect"] == False and charac["color"] != "purple"):
@@ -297,7 +333,7 @@ class Phantom(BasePlayer):
                 for charac in self.game_state["characters"]:
                     if (charac["suspect"] == False and charac["color"] != "purple"):
                         status = self.getRoomStatus(charac["position"])
-                        if (status["charact_nb"] > 1 and status["suspect_nb"] >= 1):
+                        if (status["charact_nb"] > 1):
                             if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
                             return True
                 return False #2.
@@ -378,9 +414,6 @@ class Phantom(BasePlayer):
                     self.response_index =  self.possible_answer.index(choice(self.possible_answer))
 
 
-
-
-
     def selectBluePowerRoom(self):
         """
             Blue: Move the 'lock' token (room)
@@ -400,6 +433,23 @@ class Phantom(BasePlayer):
             White: Move the other characters from the room
         """
         self.response_index = 0
+
+    def selectBlackPower(self):
+        """
+            Black: Move the other characters to the room
+            1. Useless when phantom can scream -> Black is not in shadow
+            2. Useless when phantom cannot scream -> black in shadow
+            A. Usefull when phantom can scream -> Black is in shadow
+            B. Usefull when phantom cannot scream -> Black is not in shadow
+        """
+        if (self.phantomCanScream()):
+            if (self.selected_character["position"] == self.game_state["shadow"]):
+                return True #A.
+            return False #1.
+        else:
+            if (self.selected_character["position"] == self.game_state["shadow"]):
+                return False #2.
+            return True #B.
 
 
     def answer(self):
