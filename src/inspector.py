@@ -59,6 +59,59 @@ class Inspector(BasePlayer):
         inspector_logger.debug(f"response index ---- {self.response_index}")
         inspector_logger.debug(f"response ---------- {self.possible_answer[self.response_index]}")
 
+    def getInfoCharacter(self):
+        print("All infos for all cards")
+        for i in self.possible_answer:
+            print(i)
+            L = self.getPossibleMovement(i)
+            print(L)
+            print("room status")
+            for j in L:
+                print(self.getRoomStatus(j))
+
+    def getNbInRoom(self):
+        nb = 0
+        nbRoom = 0
+        for i in range(9):
+            a = self.getCharacterNbInRoom(i)
+            if a > nb:
+                nb = a
+                nbRoom = i
+        return nbRoom
+
+    def splitCharacters(self):
+        print("split characters")
+        nb = 8
+        indexToReturn = 0
+        for i in self.possible_answer:
+            if self.getCharacterNbInRoom(i) < nb:
+                indexToReturn = self.possible_answer.index(i)
+                nb = self.getCharacterNbInRoom(i)
+        print("index to return = ", indexToReturn)
+        self.response_index = indexToReturn
+
+
+    def togetherCharacters(self):
+        print("Bring characters together")
+        nb = 0
+        indexToReturn = 0
+        for i in self.possible_answer:
+            if self.getCharacterNbInRoom(i) > nb:
+                indexToReturn = self.possible_answer.index(i)
+                nb = self.getCharacterNbInRoom(i)
+        print("index to return = ", indexToReturn)
+        self.response_index = indexToReturn
+
+    
+    def makeStrategyChoice(self): ## get infos for all rooms to know if inspector separate people or to assemble them
+        if self.getCharacterNbInRoom(self.getNbInRoom()) > 3:
+            self.splitCharacters()
+        else:
+            self.togetherCharacters()
+        print("Possible answer are:")
+        print(self.possible_answer)
+        
+
     def selectCharacter(self):
         if ("red" in self.getActiveCardsColors()):
             self.response_index = self.getIndexOfColor("red")
@@ -66,7 +119,9 @@ class Inspector(BasePlayer):
             self.response_index = randint(0, len(self.possible_answer) - 1)
 
     def selectPosition(self):
-        self.response_index = 0
+        print(self.response_index)
+        self.makeStrategyChoice()
+        ##self.response_index = 0
 
     def selectActavationOfpower(self):
         self.response_index = 0
@@ -140,7 +195,6 @@ class Inspector(BasePlayer):
         self.question = self.data["question type"]
         self.possible_answer = self.data["data"]
         self.game_state = self.data["game state"]
-        # import pdb; pdb.set_trace()
         response = self.answer()
         bytes_data = json.dumps(response).encode("utf-8")
         protocol.send_json(self.socket, bytes_data)
