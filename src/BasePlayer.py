@@ -61,7 +61,7 @@ class BasePlayer():
         return [char for char in self.game_state["active character_cards"] if char["suspect"] == False]
 
     def getPossibleMovement(self, charact):
-        nbCharact = self.getNbOfCharacterInRoom(charact["position"])
+        nbCharact = self.getCharacterNbInRoom(charact["position"])
 
         big_room_list = [self.getAdjacentRooms(charact)]
         for i in range(1, nbCharact):
@@ -128,3 +128,8 @@ class BasePlayer():
         status["total_new_innocent_if_scream"] = tniis
         status["rooms"] = status_list
         return status
+
+    def getCharacterByColor(self, color):
+        for char in self.game_state["characters"]:
+            if (char["color"] == color):
+                return char

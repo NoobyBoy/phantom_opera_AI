@@ -187,10 +187,10 @@ class Phantom(BasePlayer):
 
         # if the phantom can scream
         if (phantom_status["charact_nb"] == 1 or phantom["position"] == self.game_state["shadow"]):
+            if (self.game_state["shadow"] in self.possible_answer and "grey" not in self.getActiveCardsColors()):
+                self.response_index = self.possible_answer.index(self.game_state["shadow"])
             if (len(reachable_empty_room) > 0):
                 self.response_index = self.possible_answer.index(choice(reachable_empty_room))
-            elif (self.game_state["shadow"] in self.possible_answer):
-                self.response_index = self.possible_answer.index(self.game_state["shadow"])
             else:
                 self.response_index = randint(0, len(self.possible_answer) - 1)
 
@@ -257,13 +257,16 @@ class Phantom(BasePlayer):
 
     def selectActavationOfpower(self):
         if (self.selected_character["color"] == "purple"):
-            if (self.selected_character["color"] == self.game_state["fantom"]):
-                if (self.game_state["num_tour"] == 1): self.response_index = 0
-                else: self.response_index = 1 if (self.selectPurplePowerPhantom(True)) else 0
+            if (self.selected_character["color"] == self.game_state["fantom"] and self.game_state["num_tour"] == 1):
+                self.response_index = 0
             else:
                 self.response_index = 1 if (self.selectPurplePower(True)) else 0
-        if (self.selected_character["color"] == "black"):
+        elif (self.selected_character["color"] == "black"):
             self.response_index = 1 if self.selectBlackPower() else 0
+        elif (self.selected_character["color"] == "white"):
+            self.response_index = 1 if self.selectWhitePower(True) else 0
+        elif (self.selected_character["color"] == "brown"):
+            self.response_index = 1 if self.selectBrownPower(True) else 0
         else:
             self.response_index = 0
 
@@ -272,6 +275,7 @@ class Phantom(BasePlayer):
         room_with_one_suspect = []
         total_suspect_grouped = 0
 
+        fantom_logger.debug(self.possible_answer)
         for room in range(0, 10):
             status = self.getRoomStatus(room)
             fantom_logger.debug(status)
@@ -316,7 +320,7 @@ class Phantom(BasePlayer):
                      6. Useless when phantom cannot scream -> purple innocent not alone but no suspect alone
         """
         if (self.selected_character["color"] == self.game_state["fantom"]):
-            self.selectPurplePowerPhantom()
+            self.selectPurplePowerPhantom(checkIfUsable)
         elif (self.selected_character["suspect"]):
             if (self.phantomCanScream()):
                 for charac in self.game_state["characters"]:
@@ -363,12 +367,33 @@ class Phantom(BasePlayer):
                                 return True
                     return False #6.
 
-    def selectBrownPower(self):
+    def selectBrownPower(self, checkIfUsable=False):
         """
             Brown: Move other characters with him
+            1. Useless when phantom can scream -> Brown cannot reach shadow
+            A. Usefull when phantom can scream -> Brown can reach shadow
+            B. Usefull when phantom cannot scream
         """
-        self.response_index = 0
+        if (checkIfUsable == False):
+            if (self.game_state["fantom"] in self.possible_answer):
+                self.response_index = self.possible_answer.index(self.game_state["fantom"])
+            else:
+                sus_list = []
+                for col in self.possible_answer:
+                    if (self.getCharacterByColor(col)["suspect"] == True):
+                        sus_list.append(col)
+                if (len(sus_list) > 0):
+                    self.response_index = self.possible_answer.index(choice(sus_list))
+                else:
+                    self.response_index = randint(0, len(self.possible_answer) - 1)
 
+        else:
+            if (self.phantomCanScream()):
+                if (self.game_state["shadow"] in self.getPossibleMovement(self.selected_character)):
+                    return True #A.
+                return False #1.
+            else:
+                return True #B.
 
     def selectGreyPower(self):
         """
@@ -413,13 +438,11 @@ class Phantom(BasePlayer):
                     if (phantom["position"] in self.possible_answer): self.possible_answer.remove(phantom["position"])
                     self.response_index =  self.possible_answer.index(choice(self.possible_answer))
 
-
     def selectBluePowerRoom(self):
         """
             Blue: Move the 'lock' token (room)
         """
         self.response_index = 0
-
 
     def selectBluePowerExit(self):
         """
@@ -427,12 +450,55 @@ class Phantom(BasePlayer):
         """
         self.response_index = 0
 
-
-    def selectWhitePower(self):
+    def selectWhitePower(self, checkIfUsable=False):
         """
             White: Move the other characters from the room
+            1. Useless when white is alone
+            2. Useless when phantom cannot scream -> suspect and not alone
+            3. Usefull when phantom cannot scream -> white is not suspect and no alone suspect in adjacent room
+
+            A. Usefull when phantom can scream -> White is suspect and not alone and not in dark
+            B. Usefull when phantom can scream -> White is not suspect and not alone and not in dark
+            C. Usefull when phantom cannot scream -> white is not suspect and have alone suspect in adjacent room
         """
-        self.response_index = 0
+        if (checkIfUsable == False):
+            to_move = self.question.replace("white character power move ", "")
+            fantom_logger.debug(to_move)
+            char_to_move = self.getCharacterByColor(to_move)
+            empty_room = []
+            filled_room = []
+            alone_suspect = []
+            for room in self.possible_answer:
+                status = self.getRoomStatus(room)
+                if (status["charact_nb"] == 0 or room == self.game_state["shadow"]): empty_room.append(room)
+                else: filled_room.append(room)
+                if (status["charact_nb"] == status["suspect_nb"] == 1): alone_suspect.append(room)
+
+            if (self.phantomCanScream()):
+                if (char_to_move["suspect"] == True and len(empty_room) > 0):
+                    self.response_index = self.possible_answer.index(choice(empty_room)) #A. B.
+                elif(char_to_move["suspect"] == False and len(filled_room) > 0):
+                    self.response_index = self.possible_answer.index(choice(filled_room)) #A. B.
+                else:
+                    self.response_index = randint(0, len(self.possible_answer) - 1) #A. B.
+            else:
+                if (len(alone_suspect) > 0):
+                    self.response_index = self.possible_answer.index(choice(filled_room)) #C.
+                else:
+                    self.response_index = randint(0, len(self.possible_answer) - 1) #not susposed to happen (just for security)
+
+        else:
+            if (self.getRoomStatus(self.selected_character["position"])["charact_nb"] == 1):
+                return False #1.
+            if (self.phantomCanScream() and self.selected_character["position"] != self.game_state["shadow"]):
+                return True #A. B.
+            else:
+                if (self.selected_character["suspect"] == False) :
+                    for room in self.getAdjacentRooms(self.selected_character):
+                        status = self.getRoomStatus(room)
+                        if (status["charact_nb"] == status["suspect_nb"] == 1):
+                            return True #C.
+                return False #2. 3.
 
     def selectBlackPower(self):
         """
@@ -450,7 +516,6 @@ class Phantom(BasePlayer):
             if (self.selected_character["position"] == self.game_state["shadow"]):
                 return False #2.
             return True #B.
-
 
     def answer(self):
         if (self.question == "select character"):
@@ -474,7 +539,6 @@ class Phantom(BasePlayer):
         self.printAnswerSelection()
         return self.response_index
 
-
     def handle_json(self, msg):
         self.data = json.loads(msg)
         self.question = self.data["question type"]
@@ -485,7 +549,6 @@ class Phantom(BasePlayer):
         bytes_data = json.dumps(response).encode("utf-8")
         protocol.send_json(self.socket, bytes_data)
         self.data.clear();
-
 
     def run(self):
         try :
