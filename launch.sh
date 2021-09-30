@@ -11,7 +11,7 @@ if [[ $1 == "-h" ]]; then
   echo "  -i, --inspector [path]          change the default parameter for the path of inspector file by the precised one"
   echo "  -p, --phantom [path]            change the default parameter for the path of phantom file  by the precised one"
   echo "  -ri, --random_inspector         change the default parameter for the path of inspector by phantom_opera/random_inspector.py"
-  echo "  -ri, --random_phantom           change the default parameter for the path of phantom by phantom_opera/random_phantom.py"
+  echo "  -rp, --random_phantom           change the default parameter for the path of phantom by phantom_opera/random_phantom.py"
   echo ""
   exit 0
 fi

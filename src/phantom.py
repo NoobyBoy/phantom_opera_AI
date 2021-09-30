@@ -438,17 +438,43 @@ class Phantom(BasePlayer):
                     if (phantom["position"] in self.possible_answer): self.possible_answer.remove(phantom["position"])
                     self.response_index =  self.possible_answer.index(choice(self.possible_answer))
 
+    def isDangerous(self, char):
+        reachable_rooms = self.getPossibleMovement(char)
+        for room in reachable_rooms:
+            status = self.getRoomStatus(room)
+            if (self.phantomCanScream() and status["charact_nb"] == status["suspect_nb"] == 1):
+                return room
+        return -1
+
     def selectBluePowerRoom(self):
         """
             Blue: Move the 'lock' token (room)
         """
-        self.response_index = 0
+        self.lock_from = -1
+        for char in self.getActiveCards():
+            res = self.isDangerous(char)
+            if (res >= 0):
+                self.lock_from = char["position"]
+                self.response_index = self.possible_answer.index(res)
+                return
+
+        self.response_index = randint(0, len(self.possible_answer) - 1)
 
     def selectBluePowerExit(self):
         """
             Blue: Move the 'lock' token (exit)
         """
-        self.response_index = 0
+        if (self.lock_from >= 0):
+            self.response_index = randint(0, len(self.possible_answer) - 1)
+        else:
+            min = 99
+            min_room = self.possible_answer[0]
+            for room in self.possible_answer:
+                if (abs(room - self.lock_from) < min):
+                    min = abs(room - self.lock_from) ## Too lazy to make an algorithm to find path for the moment this aprox seems to work in the majority of cases
+                    min_room = room
+            self.response_index = self.possible_answer.index(min_room)
+
 
     def selectWhitePower(self, checkIfUsable=False):
         """
