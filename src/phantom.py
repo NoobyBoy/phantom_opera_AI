@@ -318,6 +318,11 @@ class Phantom(BasePlayer):
                      4. Useless when phantom can scream -> purple innocent and not alone
                      5. Useless when phantom cannot scream -> purple innocent alone
                      6. Useless when phantom cannot scream -> purple innocent not alone but no suspect alone
+
+                     A. Usefull when phantom can scream -> purple suspect can swap with innocent alone or in shadow
+                     B. Usefull when phantom cannot scream -> purple suspect can swap with innocent grouped
+                     C. Usefull when phantom can scream -> purple innocent and alone can swap with suspect grouped
+                     D. Usefull when phantom cannot scream -> purple innocent grouped can swap with suspect alone or in dark
         """
         if (self.selected_character["color"] == self.game_state["fantom"]):
             self.selectPurplePowerPhantom(checkIfUsable)
@@ -328,10 +333,10 @@ class Phantom(BasePlayer):
                         status = self.getRoomStatus(charac["position"])
                         if (status["innocent_nb"] == status["charact_nb"] == 1):
                             if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
-                            return True
+                            return True #A.
                         if (charac["position"] == self.game_state["shadow"]):
                             if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
-                            return True
+                            return True #A.
                 return False #1.
             else:
                 for charac in self.game_state["characters"]:
@@ -339,7 +344,7 @@ class Phantom(BasePlayer):
                         status = self.getRoomStatus(charac["position"])
                         if (status["charact_nb"] > 1):
                             if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
-                            return True
+                            return True #B.
                 return False #2.
 
         else:
@@ -351,7 +356,7 @@ class Phantom(BasePlayer):
                             status = self.getRoomStatus(charac["position"])
                             if (status["charact_nb"] > 1 and charac["position"] != self.game_state["shadow"]):
                                 if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
-                                return True
+                                return True #C.
                     return False #3.
                 else:
                     return False #4.
@@ -364,7 +369,7 @@ class Phantom(BasePlayer):
                             status = self.getRoomStatus(charac["position"])
                             if (status["charact_nb"] == 1 or charac["position"] == self.game_state["shadow"]):
                                 if (checkIfUsable == False): self.response_index = self.possible_answer.index(charac["color"])
-                                return True
+                                return True #D.
                     return False #6.
 
     def selectBrownPower(self, checkIfUsable=False):
@@ -397,7 +402,10 @@ class Phantom(BasePlayer):
 
     def selectGreyPower(self):
         """
-            Grey: Move the 'Electrical problem' token
+            Grey: Move the 'Shadow' token
+            #1. phantom can scream -> put the shadow where there is the most grouped suspects
+            #2. phantom cannot scream -> But he is grouped with a lot of suspect so much that if we put shadow on phantom there is more phantom alone and in the dark than grouped
+
         """
         empty_room = []
         room_with_one_suspect = []
@@ -421,22 +429,22 @@ class Phantom(BasePlayer):
 
         if (phantom_status["charact_nb"] == 1) :
             if (most_sus != 0):
-                self.response_index = self.possible_answer.index(room_with_most_sus)
+                self.response_index = self.possible_answer.index(room_with_most_sus) #1.
             else:
-                self.response_index = randint(0, len(self.possible_answer) - 1)
+                self.response_index = randint(0, len(self.possible_answer) - 1) #nothing special can be done
         else:
             tsg = total_suspect_grouped - phantom_status["suspect_nb"] #suspect grouped minus suspect with phantom
             tsa = len(room_with_one_suspect) + phantom_status["suspect_nb"] #suspect alone plus suspect with phantom
             if (phantom["position"] != self.game_state["shadow"] and tsa > tsg):
-                self.response_index = self.possible_answer.index(phantom["position"])
+                self.response_index = self.possible_answer.index(phantom["position"]) #2.
             else:
                 other_room = empty_room + room_with_one_suspect
                 if (self.game_state["shadow"] in other_room): other_room.remove(self.game_state["shadow"])
                 if (len(other_room) > 0):
-                    self.response_index = self.possible_answer.index(choice(other_room))
+                    self.response_index = self.possible_answer.index(choice(other_room)) #else we limit the damage a :max
                 else:
                     if (phantom["position"] in self.possible_answer): self.possible_answer.remove(phantom["position"])
-                    self.response_index =  self.possible_answer.index(choice(self.possible_answer))
+                    self.response_index =  self.possible_answer.index(choice(self.possible_answer)) #nothing special can be done
 
     def isDangerous(self, char):
         reachable_rooms = self.getPossibleMovement(char)
@@ -449,6 +457,8 @@ class Phantom(BasePlayer):
     def selectBluePowerRoom(self):
         """
             Blue: Move the 'lock' token (room)
+            we try to detect if someone might come and join a suspect alone (we don't want that)
+            if no problem random
         """
         self.lock_from = -1
         for char in self.getActiveCards():
@@ -463,6 +473,8 @@ class Phantom(BasePlayer):
     def selectBluePowerExit(self):
         """
             Blue: Move the 'lock' token (exit)
+            if we detected someone dangerous we try to block him
+            else random
         """
         if (self.lock_from >= 0):
             self.response_index = randint(0, len(self.possible_answer) - 1)
