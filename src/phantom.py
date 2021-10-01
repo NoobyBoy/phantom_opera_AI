@@ -112,6 +112,12 @@ class Phantom(BasePlayer):
         return len([char for char in self.game_state["active character_cards"] if char["position"] == roomNb and char["suspect"] == True])
 
     def selectPositionPhantom(self):
+        """
+            select position as the phantom
+            he will try to match the status of the majority of the suspects
+            if there is more isolated (and in the shadow) suspects he will try to be in a position where he can scream
+            otherwise in try to group with someone
+        """
         reachable_empty_room = []
         room_with_one_suspect = []
         room_with_mult_suspect = []
@@ -153,7 +159,13 @@ class Phantom(BasePlayer):
             self.response_index = randint(0, len(self.possible_answer) - 1)
 
     def selectPositionNotPhantomSuspect(self):
-
+        """
+            select position as a suspect
+            he will try to match the status of the phantom
+            As we play in first priority the phantom, the phantom is not susposed to move before the end of the round
+            if the phantom can scream he will try to isolate himself or reach the shadow (only if the grey character will not be played later in this round)
+            else he will try to reach someone (that will not be played later in the round (as they are obligated to move))
+        """
         phantom = self.getPhantom()
         phantom_status = self.getRoomStatus(phantom["position"])
 
@@ -201,6 +213,11 @@ class Phantom(BasePlayer):
             self.response_index = randint(0, len(self.possible_answer) - 1)
 
     def selectPositionNotPhantomNotSuspect(self):
+        """
+            select position as an innocent
+            if the phantom can scream we try to reach the shadow or an empty room to not discard one or multiple suspects
+            else we try to group with isolated suspect to help them
+        """
         phantom = self.getPhantom()
         phantom_status = self.getRoomStatus(phantom["position"])
         character_status = self.getRoomStatus(self.selected_character["position"])
@@ -257,6 +274,7 @@ class Phantom(BasePlayer):
 
     def selectActavationOfpower(self):
         if (self.selected_character["color"] == "purple"):
+            #the first round everybody is suspect so it's useless to swap with anybody, or is it ? i think it's not really worthy
             if (self.selected_character["color"] == self.game_state["fantom"] and self.game_state["num_tour"] == 1):
                 self.response_index = 0
             else:
@@ -271,6 +289,12 @@ class Phantom(BasePlayer):
             self.response_index = 0
 
     def selectPurplePowerPhantom(self, checkIfUsable=False):
+        """
+            little variation for purple when phantom_status
+            as in positioning function he will try to match the status of most the suspect:
+            if there is more isolated (and in the shadow) suspects he will try to be in a position where he can scream
+            otherwise in try to group with someone
+        """
         reachable_empty_room = []
         room_with_one_suspect = []
         total_suspect_grouped = 0
