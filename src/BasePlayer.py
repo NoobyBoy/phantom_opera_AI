@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
 
+
+"""
+    The BasePlayer class is the base class for both the phantom and the inspector, they both inherite from it
+    the class contains some Usefull function to get information about the game
+"""
+
 import json
 
 from typing import Tuple

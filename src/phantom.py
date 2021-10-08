@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
 
+"""
+    The phantom class
+
+
+"""
+
 import json
 import logging
 import os
