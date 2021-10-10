@@ -7,6 +7,9 @@
 
 """
 
+import sys
+sys.path.insert(1, 'Dussourd_src')
+
 import json
 import logging
 import os
@@ -14,7 +17,7 @@ import socket
 from logging.handlers import RotatingFileHandler
 import protocol
 
-from BasePlayer import *
+from Dussourd_BasePlayer import *
 
 host = "localhost"
 port = 12000

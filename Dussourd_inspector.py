@@ -6,6 +6,9 @@
 
 """
 
+import sys
+sys.path.insert(1, 'Dussourd_src')
+
 import json
 import logging
 import os
@@ -13,7 +16,7 @@ import socket
 from logging.handlers import RotatingFileHandler
 import protocol
 
-from BasePlayer import *
+from Dussourd_BasePlayer import *
 
 host = "localhost"
 port = 12000
@@ -82,7 +85,7 @@ class Inspector(BasePlayer):
                 if self.getCharacterNbInRoom(charact["position"]) == 1 or charact["position"] == self.game_state["shadow"]:
                     self.charCanScream.append(charact)
 
-    def getNbInRoom(self): 
+    def getNbInRoom(self):
         """
             Count if there are some group or not to choose a strategy (Split or Together functions) and return the number with the more people in it
             retourne le numéro de salle avec le plus de personne
@@ -123,14 +126,14 @@ class Inspector(BasePlayer):
 
     def ChooseStrategy(self): # function where we decide which strategy we will use
         """
-            3 cas (choisir en priorité un suspect): 
-            il est suspect et peut crier (si assez de cas comme lui, le regrouper, sinon tout seul), 
-            il est suspect mais ne peut pas crier (si assez de sus qui peuvent crier, l'empêcher de crier, sinon le faire crier) 
+            3 cas (choisir en priorité un suspect):
+            il est suspect et peut crier (si assez de cas comme lui, le regrouper, sinon tout seul),
+            il est suspect mais ne peut pas crier (si assez de sus qui peuvent crier, l'empêcher de crier, sinon le faire crier)
             il est innocent (il y a assez de sus qui crient, random sinon en fonction de la couleur, faire en sorte qu'il puisse crier) done
         """
         screamPlayable = []
         susplayable = self.getSuspectPlayable()
-        
+
         if susplayable == 0: # if there is no sus in the choice of character
             if len(self.charCanScream) > 2: # if there is more than 2 char who can scream, we try to reduce this number
                 self.splitChar = False
@@ -142,11 +145,11 @@ class Inspector(BasePlayer):
         for char in susplayable:
             if char in self.charCanScream:
                 screamPlayable.append(char)
-        
+
         if len(self.charCanScream) > 2 and len(screamPlayable) != 0: # If there is more than 2 char who can scream, we want to reduce the number to 2 so we try to create a group
             self.splitChar = False
             self.returnCharacter(screamPlayable) # choose a character in the list of char who can scream according to the priority list
-        
+
         if len(self.charCanScream) < 2 and len(susplayable) != 0: # if there is not enough char who can scream, we try to split them
             self.splitChar = True
             self.returnCharacter(susplayable) #choose a character in the list of suspect char according to the priority list
@@ -179,10 +182,10 @@ class Inspector(BasePlayer):
         if charact in self.charCanScream:
             return True
         else:
-            return False 
-    
-    def makeStrategyChoice(self): 
-        """ 
+            return False
+
+    def makeStrategyChoice(self):
+        """
             get infos for all rooms to know if inspector separate people or assemble them
             If there is a group of 3 or more, we split people
             If there is no group of 3 or more people, we assemble them
@@ -191,7 +194,7 @@ class Inspector(BasePlayer):
             self.splitCharacters()
         else:
             self.togetherCharacters()
-        
+
 
     def selectCharacter(self):
         self.ChooseStrategy()
@@ -211,7 +214,7 @@ class Inspector(BasePlayer):
 
     def selectPurplePower(self):
         """
-            Purple: Can swap position with another character 
+            Purple: Can swap position with another character
 
             If purple innocent => change position with suspect who cannot scream if there is not enough suspect who can scream
             else, change position with character who can scream so he can't scream anymore
@@ -242,19 +245,19 @@ class Inspector(BasePlayer):
 
     def selectBrownPower(self):
         """
-            Brown: Move other characters with him => if 1 or 2 suspect with him, move, if possible, 
+            Brown: Move other characters with him => if 1 or 2 suspect with him, move, if possible,
             in the room with no light if there is nobody in the room
         """
         brown = self.getCharacterByColor("brown")
-        roomList = self.getPossibleMovement(brown)            
+        roomList = self.getPossibleMovement(brown)
 
         self.response_index = 0
 
 
     def selectGreyPower(self):
         """
-            Grey: Move the 'Electrical problem' token 
-            => check if there is a group and how many suspect are inside, 
+            Grey: Move the 'Electrical problem' token
+            => check if there is a group and how many suspect are inside,
             if there is 1 or 2 suspects, move the 'problem' in the room
         """
         print("Select Grey Power", self.possible_answer)
