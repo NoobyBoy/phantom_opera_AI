@@ -70,7 +70,7 @@ class Inspector(BasePlayer):
         inspector_logger.debug(f"response index ---- {self.response_index}")
         inspector_logger.debug(f"response ---------- {self.possible_answer[self.response_index]}")
 
-    def CanScream(self):#fill a list with all characters who can potentially scream
+    def CanScream(self):#fill a list with all characters who can  scream
         """
             Check how many people can scream and list them, the goal is to have at least 2 people who can scream
             A character can scream if he's suspect, and alone or in the room without power
@@ -100,14 +100,12 @@ class Inspector(BasePlayer):
         """
             Count the number of characters in the possibles answers and return the room with the less character in it
         """
-        print("split characters")
         nb = 8
         indexToReturn = 0
         for i in self.possible_answer:
             if self.getCharacterNbInRoom(i) < nb:
                 indexToReturn = self.possible_answer.index(i)
                 nb = self.getCharacterNbInRoom(i)
-        print("index to return = ", indexToReturn)
         self.response_index = indexToReturn
 
 
@@ -115,15 +113,12 @@ class Inspector(BasePlayer):
         """
             Count the number of characters in the possibles answers and return the room with the more character in it
         """
-        print("Bring characters together")
         nb = 0
         indexToReturn = 0
         for i in self.possible_answer:
             if self.getCharacterNbInRoom(i) > nb:
                 indexToReturn = self.possible_answer.index(i)
                 nb = self.getCharacterNbInRoom(i)
-        print("index to return = ", indexToReturn)            
-        print(self.game_state["shadow"])
         self.response_index = indexToReturn
 
     def ChooseStrategy(self): # function where we decide which strategy we will use
@@ -135,7 +130,6 @@ class Inspector(BasePlayer):
         """
         screamPlayable = []
         susplayable = self.getSuspectPlayable()
-        print("List of Playable characters ", self.game_state["active character_cards"])
         
         if susplayable == 0: # if there is no sus in the choice of character
             if len(self.charCanScream) > 2: # if there is more than 2 char who can scream, we try to reduce this number
@@ -164,6 +158,19 @@ class Inspector(BasePlayer):
                 if priority == char["color"]:
                     self.response_index = self.getIndexOfColor(priority)
 
+    def getAllSus(self): # function which return all suspect
+        susList = []
+        for charact in self.game_state["characters"]:
+            if charact["suspect"] == True:
+                susList.append(charact)
+        return susList
+
+    def getAllInno(self):
+        innoList = []
+        for charact in self.game_state["characters"]:
+            if charact["suspect"] == False:
+                innoList.append(charact)
+        return innoList
 
     def CharactCanScream(self, charact):#return true or false if the character can scream or not
         """
@@ -196,7 +203,6 @@ class Inspector(BasePlayer):
             self.response_index = randint(0, len(self.possible_answer) - 1)
 
     def selectPosition(self):
-        print(self.response_index)
         self.makeStrategyChoice()
 
     def selectActivationOfpower(self):
@@ -213,24 +219,43 @@ class Inspector(BasePlayer):
             if purple sus => if there is enough suspect who can scream, go where purple cannot scream
             else, change with innocent alone
         """
-        if self.getCharacterByColor("purple")["suspect"]:
+        purple = self.getCharacterByColor("purple")
+        answer = 0
+        if purple["suspect"]:
             if len(self.charCanScream) > 2:
-                print("Do something")
-        else:
-            print("purple is inno")
-        #self.response_index = 0
+                for i in self.getAllInno():
+                    if self.getInnocentNbInRoom(i[position]) > 1:
+                        answer = self.getIndexOfColor(i)
+            if len(self.charCanScream) < 2:
+                for i in self.getAllInno():
+                    if self.getInnocentNbInRoom(i[position]) == 1 and self.getCharacterNbInRoom(i[positon] == 1):
+                        answer = self.getIndexOfColor(i)
+        else: #Purple is innocent
+            if len(self.charCanScream) > 2:
+                answer = self.getIndexOfColor(self.CharactCanScream)
+            elif len(self.charCanScream) < 2:
+                for i in self.getAllSus():
+                    if self.getSuspecNbInRoom(i[position]) > 1:
+                        answer = self.getIndexOfColor(i)
+        self.response_index = answer
+
 
     def selectBrownPower(self):
         """
-            Brown: Move other characters with him => if 1 or 2 suspect with him, move, if possible, in the room with no light
+            Brown: Move other characters with him => if 1 or 2 suspect with him, move, if possible, 
+            in the room with no light if there is nobody in the room
         """
+        brown = self.getCharacterByColor("brown")
+        roomList = self.getPossibleMovement(brown)            
+
         self.response_index = 0
 
 
-    def selectGreyPower(self): ## fonction dans laquelle on choisi la pièce où mettre la panne de courant
+    def selectGreyPower(self):
         """
             Grey: Move the 'Electrical problem' token 
-            => check if there is a group and how many suspect are inside, if there is 1 or 2 sus, move the 'problem' in the room
+            => check if there is a group and how many suspect are inside, 
+            if there is 1 or 2 suspects, move the 'problem' in the room
         """
         print("Select Grey Power", self.possible_answer)
         answer = -1
@@ -246,7 +271,7 @@ class Inspector(BasePlayer):
         self.response_index = answer
 
 
-    def selectBluePowerRoom(self): ## fonction dans laquelle on choisi la pièce où mettre le lock
+    def selectBluePowerRoom(self):
         """
             Blue: Move the 'lock' token (room)
             Select a room without anybody
@@ -263,6 +288,7 @@ class Inspector(BasePlayer):
         """
             Blue: Move the 'lock' token (exit)
         """
+        print("BluePowerExit answer ", self.possible_answer)
         self.response_index = 0
 
 
@@ -277,7 +303,6 @@ class Inspector(BasePlayer):
         if (self.question == "select character"):
             NoPowerRoom = self.game_state["shadow"]
             self.CanScream()
-            print("list of character who can scream ", self.charCanScream)
             self.selectCharacter()
         if (self.question == "select position"):
             self.selectPosition()
@@ -289,7 +314,6 @@ class Inspector(BasePlayer):
             self.selectBrownPower()
         if (self.question == "grey character power"):
             self.selectGreyPower()
-            #import pdb; pdb.set_trace()
         if (self.question == "blue character power room"):
             self.selectBluePowerRoom()
         if (self.question == "blue character power exit"):

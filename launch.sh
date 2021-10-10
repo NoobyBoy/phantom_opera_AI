@@ -1,7 +1,7 @@
 #!/bin/bash
 
-phantom="src/phantom.py"
-inspector="src/inspector.py"
+phantom="src/Dussourd_phantom.py"
+inspector="src/Dussourd_inspector.py"
 
 if [[ $1 == "-h" ]]; then
   echo "Usage :"
@@ -19,9 +19,9 @@ fi
 if [ -z $1 ]; then
   python3 phantom_opera/server.py &
   sleep 0.5
-  python3 src/inspector.py &
+  python3 src/Dussourd_inspector.py &
   sleep 0.5
-  python3 src/phantom.py &
+  python3 src/Dussourd_phantom.py &
   wait
   echo ""
 else
